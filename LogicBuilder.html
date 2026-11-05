@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic Builder Mobile Studio</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f6f9;
+      color: #1e293b;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* TOPBAR HEADER */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      z-index: 50;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .name {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      padding: 6px 10px;
+      border-radius: 6px;
+      outline: none;
+      background: #f8fafc;
+      min-width: 100px;
+    }
+    .name:focus {
+      background: #ffffff;
+      border-color: #cbd5e1;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn.secondary {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    /* MAIN CANVAS WORKSPACE */
+    .canvas {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      min-height: 0;
+    }
+
+    /* BLOCK STYLING */
+    .block {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      touch-action: none;
+      position: relative;
+    }
+
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .handle {
+      cursor: grab;
+      color: #94a3b8;
+      font-size: 18px;
+      padding: 2px 4px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .block-title {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 14px;
+      outline: none;
+      color: #0f172a;
+    }
+
+    .btn-del {
+      border: none;
+      background: transparent;
+      color: #ef4444;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* NESTED SLOTS */
+    .slot {
+      min-height: 40px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 8px;
+      background: rgba(248, 250, 252, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .slot.drag-over {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+
+    /* BLOCK TYPES COLOR ACCENTS */
+    .block[data-type="if"], .block[data-type="ifelse"] { border-left: 4px solid #3b82f6; }
+    .block[data-type="while"], .block[data-type="foreach"] { border-left: 4px solid #8b5cf6; }
+    .block[data-type="task"] { border-left: 4px solid #10b981; }
+    .block[data-type="todo"] { border-left: 4px solid #f59e0b; }
+    .block[data-type="fyi"] { border-left: 4px solid #06b6d4; }
+    .block[data-type="background"] { border-left: 4px solid #64748b; }
+
+    /* BOTTOM PALETTE TOOLBAR */
+    .palette {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 6px;
+      padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: #ffffff;
+      border-top: 1px solid #dce2eb;
+      z-index: 100;
+      flex: 0 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+    }
+    .palette-item {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: grab;
+      touch-action: none;
+      flex: 1 1 0px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      gap: 4px;
+    }
+    .palette-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.15s ease;
+    }
+    .palette-item:active .palette-icon-box {
+      transform: scale(0.92);
+    }
+    .palette-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    /* COLOR ACCENTS FOR PALETTE BOXES */
+    .palette-item[data-type="if"] .palette-icon-box { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .palette-item[data-type="ifelse"] .palette-icon-box { background: linear-gradient(135deg, #60a5fa, #1d4ed8); }
+    .palette-item[data-type="while"] .palette-icon-box { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+    .palette-item[data-type="foreach"] .palette-icon-box { background: linear-gradient(135deg, #c084fc, #9333ea); }
+    .palette-item[data-type="task"] .palette-icon-box { background: linear-gradient(135deg, #34d399, #059669); }
+    .palette-item[data-type="todo"] .palette-icon-box { background: linear-gradient(135deg, #fbbf24, #d97706); }
+    .palette-item[data-type="fyi"] .palette-icon-box { background: linear-gradient(135deg, #22d3ee, #0891b2); }
+    .palette-item[data-type="background"] .palette-icon-box { background: linear-gradient(135deg, #94a3b8, #475569); }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="topbar">
+      <input type="text" id="logicName" class="name" value="" placeholder="Logic Name">
+      <div class="actions">
+        <button class="btn secondary" id="btnLoad">Load File</button>
+        <button class="btn" id="btnSave">Save JSON</button>
+        <input type="file" id="fileInput" accept=".json" style="display: none;">
+      </div>
+    </div>
+
+    <div class="canvas" id="canvas"></div>
+
+    <div class="palette" id="palette">
+      <button class="palette-item" data-type="if">
+        <div class="palette-icon-box">IF</div>
+        <span class="palette-label">If</span>
+      </button>
+      <button class="palette-item" data-type="ifelse">
+        <div class="palette-icon-box">IF/E</div>
+        <span class="palette-label">If/Else</span>
+      </button>
+      <button class="palette-item" data-type="while">
+        <div class="palette-icon-box">WHL</div>
+        <span class="palette-label">While</span>
+      </button>
+      <button class="palette-item" data-type="foreach">
+        <div class="palette-icon-box">FOR</div>
+        <span class="palette-label">For each</span>
+      </button>
+      <button class="palette-item" data-type="task">
+        <div class="palette-icon-box">TSK</div>
+        <span class="palette-label">Task</span>
+      </button>
+      <button class="palette-item" data-type="todo">
+        <div class="palette-icon-box">TDO</div>
+        <span class="palette-label">Todo</span>
+      </button>
+      <button class="palette-item" data-type="fyi">
+        <div class="palette-icon-box">FYI</div>
+        <span class="palette-label">FYI</span>
+      </button>
+      <button class="palette-item" data-type="background">
+        <div class="palette-icon-box">BG</div>
+        <span class="palette-label">Background</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved!</div>
+
+  <script>
+    // INITIAL APP STATE: STRICTLY EMPTY LIST
+    let tree = [];
+
+    const canvas = document.getElementById('canvas');
+    const toast = document.getElementById('toast');
+    const logicNameInput = document.getElementById('logicName');
+    const fileInput = document.getElementById('fileInput');
+
+    // HELPER: Generate UNIQUE ID
+    function uid() {
+      return 'b_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // ELEMENT NAME MAPPING FOR DROPPED BLOCKS
+    const typeNames = {
+      if: 'If',
+      ifelse: 'If',
+      while: 'While',
+      foreach: 'For each',
+      task: 'Task',
+      todo: 'Todo',
+      fyi: 'FYI',
+      background: 'Background'
+    };
+
+    // CREATE BLOCK OBJECT SCHEMA
+    function make(type) {
+      const name = typeNames[type] || 'Block';
+      const block = {
+        id: uid(),
+        type: type,
+        title: `${name}: `,
+        children: []
+      };
+      if (type === 'ifelse') {
+        block.elseChildren = [];
+      }
+      return block;
+    }
+
+    // TOAST NOTIFICATION
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // FIND NODE IN TREE
+    function findNode(nodes, id) {
+      for (let n of nodes) {
+        if (n.id === id) return n;
+        if (n.children) {
+          const found = findNode(n.children, id);
+          if (found) return found;
+        }
+        if (n.elseChildren) {
+          const found = findNode(n.elseChildren, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // REMOVE NODE FROM TREE AND RETURN IT
+    function removeNode(nodes, id) {
+      for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === id) {
+          return nodes.splice(i, 1)[0];
+        }
+        if (nodes[i].children) {
+          const removed = removeNode(nodes[i].children, id);
+          if (removed) return removed;
+        }
+        if (nodes[i].elseChildren) {
+          const removed = removeNode(nodes[i].elseChildren, id);
+          if (removed) return removed;
+        }
+      }
+      return null;
+    }
+
+    // RENDER TREE TO DOM
+    function render() {
+      canvas.innerHTML = '';
+      if (tree.length === 0) {
+        canvas.innerHTML = '<div style="text-align:center; padding: 40px; color: #94a3b8; font-size: 14px;">Drag or tap blocks from the bottom bar to build logic</div>';
+        return;
+      }
+      tree.forEach(node => {
+        canvas.appendChild(renderNode(node));
+      });
+    }
+
+    function renderNode(node) {
+      const el = document.createElement('div');
+      el.className = 'block';
+      el.dataset.id = node.id;
+      el.dataset.type = node.type;
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'block-header';
+
+      const handle = document.createElement('span');
+      handle.className = 'handle';
+      handle.innerHTML = '⋮⋮';
+      handle.addEventListener('pointerdown', (e) => startMoveExisting(e, node.id));
+
+      const input = document.createElement('input');
+      input.className = 'block-title';
+      input.value = node.title || (typeNames[node.type] + ': ');
+      input.addEventListener('input', (e) => {
+        node.title = e.target.value;
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-del';
+      delBtn.innerHTML = '✕';
+      delBtn.addEventListener('click', () => {
+        removeNode(tree, node.id);
+        render();
+      });
+
+      header.appendChild(handle);
+      header.appendChild(input);
+      header.appendChild(delBtn);
+      el.appendChild(header);
+
+      // Slots for child elements
+      if (['if', 'while', 'foreach', 'task', 'background'].includes(node.type)) {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.dataset.targetId = node.id;
+        slot.dataset.slotType = 'children';
+        if (!node.children) node.children = [];
+        node.children.forEach(child => {
+          slot.appendChild(renderNode(child));
+        });
+        el.appendChild(slot);
+      } else if (node.type === 'ifelse') {
+        const ifLabel = document.createElement('div');
+        ifLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: #3b82f6; margin-top: 4px;';
+        ifLabel.textContent = 'THEN DO:';
+        el.appendChild(ifLabel);
+
+        const slotIf = document.createElement('div');
+        slotIf.className = 'slot';
+        slotIf.dataset.targetId = node.id;
+        slotIf.dataset.slotType = 'children';
+        if (!node.children) node.children = [];
+        node.children.forEach(child => {
+          slotIf.appendChild(renderNode(child));
+        });
+        el.appendChild(slotIf);
+
+        const elseLabel = document.createElement('div');
+        elseLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: #ef4444; margin-top: 4px;';
+        elseLabel.textContent = 'ELSE DO:';
+        el.appendChild(elseLabel);
+
+        const slotElse = document.createElement('div');
+        slotElse.className = 'slot';
+        slotElse.dataset.targetId = node.id;
+        slotElse.dataset.slotType = 'elseChildren';
+        if (!node.elseChildren) node.elseChildren = [];
+        node.elseChildren.forEach(child => {
+          slotElse.appendChild(renderNode(child));
+        });
+        el.appendChild(slotElse);
+      }
+
+      return el;
+    }
+
+    // DRAG AND DROP CONTROLLER
+    let activeGhost = null;
+
+    function createGhost(title) {
+      const g = document.createElement('div');
+      g.style.cssText = 'position:fixed; padding:10px 16px; background:#2563eb; color:#fff; font-weight:600; font-size:14px; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.2); pointer-events:none; z-index:9999; transform:translate(-50%, -50%); opacity:0.9;';
+      g.textContent = title;
+      document.body.appendChild(g);
+      return g;
+    }
+
+    function startDrag(e, nodeToInsert) {
+      e.preventDefault();
+      activeGhost = createGhost(nodeToInsert.title || (typeNames[nodeToInsert.type] + ': '));
+
+      const moveGhost = (ev) => {
+        if (activeGhost) {
+          activeGhost.style.left = ev.clientX + 'px';
+          activeGhost.style.top = ev.clientY + 'px';
+        }
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('drag-over'));
+        const elementsUnder = document.elementsFromPoint(ev.clientX, ev.clientY);
+        const slot = elementsUnder.find(el => el.classList.contains('slot'));
+        if (slot) {
+          slot.classList.add('drag-over');
+        }
+      };
+
+      moveGhost(e);
+
+      const onUp = (ev) => {
+        window.removeEventListener('pointermove', moveGhost);
+        window.removeEventListener('pointerup', onUp);
+        document.querySelectorAll('.slot').forEach(s => s.classList.remove('drag-over'));
+
+        if (activeGhost) {
+          activeGhost.remove();
+          activeGhost = null;
+        }
+
+        const elementsUnder = document.elementsFromPoint(ev.clientX, ev.clientY);
+        const slot = elementsUnder.find(el => el.classList.contains('slot'));
+
+        let placed = false;
+        if (slot) {
+          const targetId = slot.dataset.targetId;
+          const slotType = slot.dataset.slotType;
+          if (targetId !== nodeToInsert.id) {
+            const parentNode = findNode(tree, targetId);
+            if (parentNode) {
+              if (!parentNode[slotType]) parentNode[slotType] = [];
+              parentNode[slotType].push(nodeToInsert);
+              placed = true;
+            }
+          }
+        }
+        
+        if (!placed) {
+          const canvasEl = elementsUnder.find(el => el.id === 'canvas' || el.classList.contains('canvas'));
+          if (canvasEl) {
+            tree.push(nodeToInsert);
+            placed = true;
+          }
+        }
+
+        if (!placed) {
+          tree.push(nodeToInsert);
+        }
+
+        render();
+      };
+
+      window.addEventListener('pointermove', moveGhost);
+      window.addEventListener('pointerup', onUp, { once: true });
+    }
+
+    function startMoveNew(e, type) {
+      const node = make(type);
+      startDrag(e, node);
+    }
+
+    function startMoveExisting(e, id) {
+      e.stopPropagation();
+      const nodeToMove = removeNode(tree, id);
+      if (!nodeToMove) return;
+      render(); // Temporarily remove from DOM so drag ghost takes over cleanly
+      startDrag(e, nodeToMove);
+    }
+
+    // BIND PALETTE ITEMS: Drag or Tap to append
+    document.querySelectorAll('.palette-item').forEach(btn => {
+      const type = btn.dataset.type;
+      
+      let startX = 0;
+      let startY = 0;
+      let isDragging = false;
+
+      btn.addEventListener('pointerdown', (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        isDragging = false;
+
+        const onMoveCheck = (moveEv) => {
+          const dist = Math.hypot(moveEv.clientX - startX, moveEv.clientY - startY);
+          if (dist > 5) {
+            isDragging = true;
+            window.removeEventListener('pointermove', onMoveCheck);
+            startMoveNew(moveEv, type);
+          }
+        };
+
+        const onUpCheck = () => {
+          window.removeEventListener('pointermove', onMoveCheck);
+          window.removeEventListener('pointerup', onUpCheck);
+          if (!isDragging) {
+            tree.push(make(type));
+            render();
+          }
+        };
+
+        window.addEventListener('pointermove', onMoveCheck);
+        window.addEventListener('pointerup', onUpCheck, { once: true });
+      });
+    });
+
+    // SAVE JSON FILE DOWNLOAD
+    document.getElementById('btnSave').addEventListener('click', () => {
+      const rawTitle = logicNameInput.value.trim() || 'Logic App';
+      const data = {
+        name: rawTitle,
+        tree: tree
+      };
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const safeFileName = rawTitle.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '') || 'logic_app';
+      const fileName = `${safeFileName}.json`;
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast(`Saved as ${fileName}`);
+    });
+
+    // LOAD JSON FILE IMPORT FROM DEVICE
+    document.getElementById('btnLoad').addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          tree = data.tree || [];
+          if (data.name) logicNameInput.value = data.name;
+          render();
+          showToast('JSON file loaded!');
+        } catch (err) {
+          showToast('Invalid JSON file');
+        }
+        fileInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    // INITIAL RENDER
+    render();
+  </script>
+</body>
+</html>
