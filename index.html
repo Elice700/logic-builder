@@ -559,7 +559,7 @@
       e.stopPropagation();
       const nodeToMove = removeNode(tree, id);
       if (!nodeToMove) return;
-      render(); // Temporarily remove from DOM so drag ghost takes over cleanly
+      render();
       startDrag(e, nodeToMove);
     }
 
@@ -654,14 +654,13 @@
     render();
   </script>
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log('Service Worker Registered!'))
-        .catch((err) => console.log('Service Worker registration failed: ', err));
-    });
-  }
-</script>
-
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => console.log('Service Worker Registered!'))
+          .catch((err) => console.log('Service Worker registration failed: ', err));
+      });
+    }
+  </script>
 </body>
 </html>
