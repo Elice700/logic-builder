@@ -1,8 +1,20 @@
 {
-"name": "Logic Builder Mobile Studio",
-"short_name": "LogicBuilder",
-"start_url": "./index.html",
-"display": "standalone",
-"background_color": "#f4f6f9",
-"theme_color": "#2563eb"
+  "name": "Logic Builder Mobile Studio",
+  "short_name": "LogicBuilder",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192.png/2563eb/ffffff?text=LB",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512.png/2563eb/ffffff?text=LB",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
